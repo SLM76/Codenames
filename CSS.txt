@@ -1,0 +1,99 @@
+const words = [
+  "أودين", "حرب", "نار", "مطرقة", "ثور", "مصير", "شفرة", "حكمة",
+  "دم", "سيف", "رعد", "ظلام", "رمز", "عهد", "ضوء", "حراسة",
+  "لعنة", "بوابة", "قوة", "معبد", "تنين", "شمس", "عين", "حرباء", "صخرة"
+];
+
+let roles = [];
+let revealedCount = { red: 0, blue: 0 };
+let board, gameStatus, hintArea;
+let showRoles = false;
+
+window.onload = () => {
+  board = document.getElementById("gameBoard");
+  gameStatus = document.getElementById("gameStatus");
+  hintArea = document.getElementById("hintArea");
+  setupGame();
+};
+
+function setupGame() {
+  board.innerHTML = '';
+  gameStatus.textContent = '';
+  hintArea.textContent = '';
+  revealedCount = { red: 0, blue: 0 };
+  const shuffled = words.sort(() => 0.5 - Math.random()).slice(0, 25);
+  roles = [...Array(9).fill('red'), ...Array(8).fill('blue'), ...Array(7).fill('neutral'), 'assassin'].sort(() => 0.5 - Math.random());
+
+  shuffled.forEach((word, i) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.role = roles[i];
+    card.innerHTML = `<div class="cover"></div>${word}`;
+
+    card.addEventListener('click', () => {
+      if (card.classList.contains('revealed')) return;
+
+      const role = card.dataset.role;
+      card.classList.add('revealed', role);
+      document.getElementById("clickSound").play();
+
+      if (role === 'red') revealedCount.red++;
+      if (role === 'blue') revealedCount.blue++;
+      if (role === 'assassin') {
+        gameStatus.textContent = '💀 لقد اخترتم القاتل! النهاية.';
+        document.getElementById("loseSound").play();
+        revealAll();
+      } else {
+        checkVictory();
+      }
+    });
+
+    board.appendChild(card);
+  });
+}
+
+function showHint() {
+  const hint = document.getElementById("hintInput").value;
+  const number = document.getElementById("hintNumber").value;
+  if (!hint || !number) {
+    alert("يرجى إدخال التلميح والعدد.");
+    return;
+  }
+  hintArea.textContent = `🧠 التلميح: "${hint}" – عدد: ${number}`;
+}
+
+function checkVictory() {
+  if (revealedCount.red === 9) {
+    gameStatus.textContent = '🎉 الفريق الأحمر فاز!';
+    document.getElementById("winSound").play();
+    revealAll();
+  }
+  if (revealedCount.blue === 8) {
+    gameStatus.textContent = '🎉 الفريق الأزرق فاز!';
+    document.getElementById("winSound").play();
+    revealAll();
+  }
+}
+
+function revealAll() {
+  document.querySelectorAll('.card').forEach((card, i) => {
+    card.classList.add(roles[i], 'revealed');
+  });
+}
+
+function toggleRoles() {
+  showRoles = !showRoles;
+  document.querySelectorAll('.card').forEach((card, i) => {
+    if (!card.classList.contains('revealed')) {
+      if (showRoles) {
+        card.classList.add(roles[i]);
+      } else {
+        card.classList.remove('red', 'blue', 'neutral', 'assassin');
+      }
+    }
+  });
+}
+
+function resetGame() {
+  setupGame();
+}
